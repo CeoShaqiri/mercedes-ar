@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -15,10 +14,6 @@ import Lenis from "lenis";
 import * as THREE from "three";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const SITE_URL = "https://mercedes-ar.netlify.app";
-const MODEL_PATH = "/models/eqs.glb";
-const AR_URL = `${SITE_URL}/ar?model=${encodeURIComponent(MODEL_PATH)}`;
 
 function Car({
   sp,
@@ -52,7 +47,6 @@ function Car({
 
     const p = sp.current;
     g.current.position.z = on.current ? p * 9 : 0;
-
     const target = on.current ? 1 : 0;
     if (beamL.current)
       beamL.current.intensity = THREE.MathUtils.lerp(
@@ -167,14 +161,14 @@ function QRModal({ onClose }: { onClose: () => void }) {
             fontFamily: "Inter,sans-serif",
             fontSize: 11,
             letterSpacing: "0.2em",
-            textTransform: "uppercase" as const,
+            textTransform: "uppercase",
             color: "#999",
           }}
         >
           Scan with your phone
         </p>
         <QRCodeSVG
-          value={AR_URL}
+          value="https://mercedes-ar.netlify.app/ar?model=%2Fmodels%2Feqs.glb"
           size={200}
           bgColor="#fff"
           fgColor="#000"
@@ -185,7 +179,7 @@ function QRModal({ onClose }: { onClose: () => void }) {
             fontFamily: "Inter,sans-serif",
             fontSize: 13,
             color: "#aaa",
-            textAlign: "center" as const,
+            textAlign: "center",
             lineHeight: 1.6,
           }}
         >
@@ -197,7 +191,7 @@ function QRModal({ onClose }: { onClose: () => void }) {
             fontFamily: "Inter,sans-serif",
             fontSize: 11,
             letterSpacing: "0.2em",
-            textTransform: "uppercase" as const,
+            textTransform: "uppercase",
             color: "#bbb",
             background: "none",
             border: "none",
@@ -216,13 +210,30 @@ function ARButton() {
   const [qr, setQr] = useState(false);
   const handleAR = () => {
     const ua = navigator.userAgent || "";
-    if (/iPad|iPhone|iPod|Android/.test(ua)) window.location.href = AR_URL;
+    if (/iPad|iPhone|iPod|Android/.test(ua))
+      window.location.href =
+        "https://mercedes-ar.netlify.app/ar?model=%2Fmodels%2Feqs.glb";
     else setQr(true);
   };
   return (
     <>
       {qr && <QRModal onClose={() => setQr(false)} />}
-      <button onClick={handleAR} className="cta">
+      <button
+        onClick={handleAR}
+        style={{
+          fontFamily: "Inter,sans-serif",
+          background: "#fff",
+          color: "#000",
+          border: "none",
+          borderRadius: "9999px",
+          padding: "16px 48px",
+          fontSize: "12px",
+          letterSpacing: ".2em",
+          textTransform: "uppercase",
+          cursor: "pointer",
+          transition: "all .4s",
+        }}
+      >
         Park it in your driveway
       </button>
     </>
@@ -236,20 +247,16 @@ export default function Home() {
   const hint = useRef<HTMLDivElement>(null);
   const t1 = useRef<HTMLHeadingElement>(null);
   const t2 = useRef<HTMLParagraphElement>(null);
-  const audioStarted = useRef(false);
 
   useEffect(() => {
-    const playAudio = () => {
-      if (audioRef.current && !audioStarted.current) {
-        audioStarted.current = true;
-        audioRef.current.volume = 0.8;
+    const playSound = () => {
+      if (audioRef.current) {
         audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
-        document.removeEventListener("pointerdown", playAudio);
+        audioRef.current.play();
       }
     };
 
-    document.addEventListener("pointerdown", playAudio);
+    document.addEventListener("click", playSound, { once: true });
 
     const lenis = new Lenis({
       duration: 1.6,
@@ -259,12 +266,7 @@ export default function Home() {
       sp.current = progress;
       if (progress > 0.015 && !on.current) {
         on.current = true;
-        if (audioRef.current && !audioStarted.current) {
-          audioStarted.current = true;
-          audioRef.current.volume = 0.8;
-          audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {});
-        }
+        playSound();
         gsap.to(hint.current, { opacity: 0, duration: 0.5 });
         gsap.fromTo(
           [t1.current, t2.current],
@@ -317,22 +319,13 @@ export default function Home() {
     });
     return () => {
       lenis.destroy();
-      document.removeEventListener("pointerdown", playAudio);
     };
   }, []);
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap');
-        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-        body{background:#000;overflow-x:hidden;font-family:'Inter',sans-serif}
-        .cta{font-family:'Inter',sans-serif;background:#fff;color:#000;border:none;border-radius:9999px;padding:16px 48px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .4s}
-        .cta:hover{background:#0a84ff;color:#fff;transform:scale(1.05)}
-      `}</style>
-
-      <audio ref={audioRef} src="/models/car.mp3" preload="auto" />
-
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap');*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow-x:hidden;font-family:'Inter',sans-serif}`}</style>
+      <audio ref={audioRef} src="/models/car.mp3" />
       <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
         <Canvas
           camera={{ position: [0, 0.3, 8], fov: 42 }}
@@ -357,7 +350,6 @@ export default function Home() {
           />
         </Canvas>
       </div>
-
       <div
         ref={hint}
         style={{
@@ -377,10 +369,8 @@ export default function Home() {
         <br />
         <span style={{ fontSize: 18 }}>↓</span>
       </div>
-
       <main style={{ position: "relative", zIndex: 10, pointerEvents: "none" }}>
         <section style={{ height: "100vh" }} />
-
         <section
           style={{
             minHeight: "100vh",
@@ -419,7 +409,6 @@ export default function Home() {
             space.
           </p>
         </section>
-
         <section
           style={{
             minHeight: "100vh",
@@ -461,7 +450,6 @@ export default function Home() {
             </p>
           </div>
         </section>
-
         <section
           style={{
             minHeight: "100vh",
@@ -520,7 +508,7 @@ export default function Home() {
                     marginTop: 8,
                   }}
                 >
-                  Recall vs static ads
+                  Recall
                 </p>
               </div>
               <div>
@@ -545,7 +533,7 @@ export default function Home() {
                     marginTop: 8,
                   }}
                 >
-                  More engagement
+                  Engagement
                 </p>
               </div>
               <div>
@@ -570,13 +558,12 @@ export default function Home() {
                     marginTop: 8,
                   }}
                 >
-                  Purchase intent lift
+                  Intent
                 </p>
               </div>
             </div>
           </div>
         </section>
-
         <section
           style={{
             minHeight: "100vh",
@@ -586,12 +573,11 @@ export default function Home() {
             justifyContent: "center",
             textAlign: "center",
             padding: "0 24px",
+            pointerEvents: "all",
           }}
         >
           <div
-            className="ru"
             style={{
-              pointerEvents: "all",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
