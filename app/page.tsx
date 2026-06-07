@@ -135,21 +135,26 @@ export default function Home() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    console.log("Page loaded, audio element:", audioRef.current);
 
-  useEffect(() => {
     const lenis = new Lenis({
       duration: 1.6,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
     lenis.on("scroll", ({ progress }: { progress: number }) => {
       sp.current = progress;
+      console.log("Scroll progress:", progress);
       if (progress > 0.015 && !on.current) {
+        console.log("TRIGGER: Playing sound now");
         on.current = true;
         if (audioRef.current && !audioPlayed.current) {
           audioPlayed.current = true;
+          audioRef.current.volume = 1;
           audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {});
+          audioRef.current
+            .play()
+            .then(() => console.log("✓ Audio is playing"))
+            .catch((err) => console.error("✗ Audio failed:", err));
         }
         gsap.to(hint.current, { opacity: 0, duration: 0.5 });
         gsap.fromTo(
@@ -217,7 +222,7 @@ export default function Home() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap');*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow-x:hidden;font-family:'Inter',sans-serif}`}</style>
-      <audio ref={audioRef} src="/models/car.mp3" />
+      <audio ref={audioRef} src="/models/car.mp3" preload="auto" />
       <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
         <Canvas
           camera={{ position: [0, 0.3, 8], fov: 42 }}
