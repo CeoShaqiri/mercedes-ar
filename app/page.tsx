@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -15,7 +16,7 @@ import * as THREE from "three";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SITE_URL = "https://your-netlify-url.netlify.app";
+const SITE_URL = "https://mercedes-ar.netlify.app";
 const MODEL_PATH = "/models/eqs.glb";
 const AR_URL = `${SITE_URL}/ar?model=${encodeURIComponent(MODEL_PATH)}`;
 
@@ -50,11 +51,9 @@ function Car({
     }
 
     const p = sp.current;
-    // drive forward toward camera
     g.current.position.z = on.current ? p * 9 : 0;
 
     const target = on.current ? 1 : 0;
-    // beams
     if (beamL.current)
       beamL.current.intensity = THREE.MathUtils.lerp(
         beamL.current.intensity,
@@ -67,7 +66,6 @@ function Car({
         target * 140,
         0.05,
       );
-    // glowing bars
     const matL = barL.current?.material as
       | THREE.MeshStandardMaterial
       | undefined;
@@ -91,8 +89,6 @@ function Car({
   return (
     <group ref={g}>
       <primitive object={scene} />
-
-      {/* FAKE GLOWING HEADLIGHT BARS — nudge position/size to sit on the car face */}
       <mesh ref={barL} position={[-0.55, 0.18, 1.9]}>
         <boxGeometry args={[0.5, 0.05, 0.05]} />
         <meshStandardMaterial
@@ -111,8 +107,6 @@ function Car({
           toneMapped={false}
         />
       </mesh>
-
-      {/* BEAMS shooting forward */}
       <object3D ref={tL} position={[-1, -0.4, 12]} />
       <object3D ref={tR} position={[1, -0.4, 12]} />
       <spotLight
@@ -255,9 +249,11 @@ export default function Home() {
         played.current = true;
         on.current = true;
         if (audioRef.current) {
-          audioRef.current.volume = 0.85;
+          audioRef.current.volume = 0.8;
           audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {});
+          audioRef.current
+            .play()
+            .catch((err) => console.log("Audio play failed:", err));
         }
         gsap.to(hint.current, { opacity: 0, duration: 0.5 });
         gsap.fromTo(
@@ -281,15 +277,17 @@ export default function Home() {
     };
     requestAnimationFrame(raf);
     gsap.set([t1.current, t2.current], { opacity: 0, y: 40 });
-    gsap.utils.toArray<Element>(".ru").forEach((el) =>
-      gsap.from(el, {
-        scrollTrigger: { trigger: el, start: "top 82%" },
-        opacity: 0,
-        y: 60,
-        duration: 1.2,
-        ease: "power4.out",
-      }),
-    );
+    gsap.utils
+      .toArray<Element>(".ru")
+      .forEach((el) =>
+        gsap.from(el, {
+          scrollTrigger: { trigger: el, start: "top 82%" },
+          opacity: 0,
+          y: 60,
+          duration: 1.2,
+          ease: "power4.out",
+        }),
+      );
     gsap.utils.toArray<HTMLElement>(".count").forEach((el) => {
       const tgt = parseInt(el.dataset.t || "0");
       gsap.fromTo(
@@ -458,7 +456,7 @@ export default function Home() {
               }}
             >
               When the website is the experience, the customer becomes your
-              marketer. They don't just see the car — they park it in their
+              marketer. They don&apos;t just see the car — they park it in their
               driveway. They own it, virtually. They share it. They become you.
             </p>
           </div>
