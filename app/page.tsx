@@ -342,7 +342,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      <main style={{ position: "relative", zIndex: 10, pointerEvents: "none" }}>
+      <main style={{ position: "relative", zIndex: 10 }}>
         <section style={{ height: "100vh" }} />
         <section
           style={{
@@ -392,7 +392,7 @@ export default function Home() {
             padding: "0 8vw",
           }}
         >
-          <div className="ru" style={{ pointerEvents: "all", maxWidth: 900 }}>
+          <div className="ru" style={{ maxWidth: 900 }}>
             <h2
               style={{
                 color: "#fff",
@@ -432,14 +432,7 @@ export default function Home() {
             padding: "0 8vw",
           }}
         >
-          <div
-            className="ru"
-            style={{
-              pointerEvents: "all",
-              textAlign: "center",
-              maxWidth: 1000,
-            }}
-          >
+          <div className="ru" style={{ textAlign: "center", maxWidth: 1000 }}>
             <p
               style={{
                 color: "#0a84ff",
@@ -546,7 +539,6 @@ export default function Home() {
             justifyContent: "center",
             textAlign: "center",
             padding: "0 24px",
-            pointerEvents: "all",
           }}
         >
           <div
