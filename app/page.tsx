@@ -47,6 +47,7 @@ function Car({
 
     const p = sp.current;
     g.current.position.z = on.current ? p * 9 : 0;
+
     const target = on.current ? 1 : 0;
     if (beamL.current)
       beamL.current.intensity = THREE.MathUtils.lerp(
@@ -247,16 +248,22 @@ export default function Home() {
   const hint = useRef<HTMLDivElement>(null);
   const t1 = useRef<HTMLHeadingElement>(null);
   const t2 = useRef<HTMLParagraphElement>(null);
+  const soundStarted = useRef(false);
 
   useEffect(() => {
+    let unlockSound = false;
+
     const playSound = () => {
-      if (audioRef.current) {
+      if (!unlockSound && audioRef.current) {
+        unlockSound = true;
+        soundStarted.current = true;
         audioRef.current.currentTime = 0;
-        audioRef.current.play();
+        audioRef.current.play().catch(() => {});
+        document.removeEventListener("pointerdown", playSound);
       }
     };
 
-    document.addEventListener("click", playSound, { once: true });
+    document.addEventListener("pointerdown", playSound);
 
     const lenis = new Lenis({
       duration: 1.6,
@@ -266,7 +273,11 @@ export default function Home() {
       sp.current = progress;
       if (progress > 0.015 && !on.current) {
         on.current = true;
-        playSound();
+        if (audioRef.current && !soundStarted.current) {
+          soundStarted.current = true;
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        }
         gsap.to(hint.current, { opacity: 0, duration: 0.5 });
         gsap.fromTo(
           [t1.current, t2.current],
@@ -319,6 +330,7 @@ export default function Home() {
     });
     return () => {
       lenis.destroy();
+      document.removeEventListener("pointerdown", playSound);
     };
   }, []);
 
