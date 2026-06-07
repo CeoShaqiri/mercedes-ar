@@ -137,7 +137,7 @@ export default function Home() {
     window.scrollTo(0, 0);
 
     const lenis = new Lenis({
-      duration: 1.6,
+      duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
     lenis.on("scroll", ({ progress }: { progress: number }) => {
@@ -215,7 +215,7 @@ export default function Home() {
 
   return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap');*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow-x:hidden;font-family:'Inter',sans-serif}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap');*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow-x:hidden;font-family:'Inter',sans-serif;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}main{pointer-events:auto}`}</style>
       <audio ref={audioRef} src="/models/car.mp3" preload="auto" />
 
       <div
@@ -231,11 +231,12 @@ export default function Home() {
       >
         <Canvas
           camera={{ position: [0, 0.3, 8], fov: 42 }}
-          gl={{ antialias: true }}
+          gl={{ antialias: true, alpha: true }}
         >
           <color attach="background" args={["#000000"]} />
-          <ambientLight intensity={0.04} />
-          <Environment preset="night" environmentIntensity={0.15} />
+          <ambientLight intensity={0.3} />
+          <directionalLight position={[5, 5, 5]} intensity={0.8} />
+          <Environment preset="night" environmentIntensity={0.4} />
           <Car sp={sp} on={on} />
           <ContactShadows
             position={[0, -1.1, 0]}
@@ -266,6 +267,7 @@ export default function Home() {
           letterSpacing: "0.3em",
           textTransform: "uppercase",
           textAlign: "center",
+          pointerEvents: "none",
         }}
       >
         Scroll to wake it
@@ -350,7 +352,7 @@ export default function Home() {
         </div>
       )}
 
-      <main style={{ position: "relative", zIndex: 10 }}>
+      <main>
         <section style={{ height: "100vh" }} />
         <section
           style={{
