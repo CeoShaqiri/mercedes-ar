@@ -47,7 +47,6 @@ function Car({
 
     const p = sp.current;
     g.current.position.z = on.current ? p * 9 : 0;
-
     const target = on.current ? 1 : 0;
     if (beamL.current)
       beamL.current.intensity = THREE.MathUtils.lerp(
@@ -61,12 +60,8 @@ function Car({
         target * 140,
         0.05,
       );
-    const matL = barL.current?.material as
-      | THREE.MeshStandardMaterial
-      | undefined;
-    const matR = barR.current?.material as
-      | THREE.MeshStandardMaterial
-      | undefined;
+    const matL = barL.current?.material as THREE.MeshStandardMaterial;
+    const matR = barR.current?.material as THREE.MeshStandardMaterial;
     if (matL)
       matL.emissiveIntensity = THREE.MathUtils.lerp(
         matL.emissiveIntensity,
@@ -128,119 +123,6 @@ function Car({
   );
 }
 
-function QRModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.92)",
-        backdropFilter: "blur(20px)",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#fff",
-          borderRadius: 24,
-          padding: 40,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 16,
-          maxWidth: 320,
-          width: "90%",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "Inter,sans-serif",
-            fontSize: 11,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#999",
-          }}
-        >
-          Scan with your phone
-        </p>
-        <QRCodeSVG
-          value="https://mercedes-ar.netlify.app/ar?model=%2Fmodels%2Feqs.glb"
-          size={200}
-          bgColor="#fff"
-          fgColor="#000"
-          level="H"
-        />
-        <p
-          style={{
-            fontFamily: "Inter,sans-serif",
-            fontSize: 13,
-            color: "#aaa",
-            textAlign: "center",
-            lineHeight: 1.6,
-          }}
-        >
-          Scan · park the EQS in your driveway
-        </p>
-        <button
-          onClick={onClose}
-          style={{
-            fontFamily: "Inter,sans-serif",
-            fontSize: 11,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#bbb",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "8px 16px",
-          }}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ARButton() {
-  const [qr, setQr] = useState(false);
-  const handleAR = () => {
-    const ua = navigator.userAgent || "";
-    if (/iPad|iPhone|iPod|Android/.test(ua))
-      window.location.href =
-        "https://mercedes-ar.netlify.app/ar?model=%2Fmodels%2Feqs.glb";
-    else setQr(true);
-  };
-  return (
-    <>
-      {qr && <QRModal onClose={() => setQr(false)} />}
-      <button
-        onClick={handleAR}
-        style={{
-          fontFamily: "Inter,sans-serif",
-          background: "#fff",
-          color: "#000",
-          border: "none",
-          borderRadius: "9999px",
-          padding: "16px 48px",
-          fontSize: "12px",
-          letterSpacing: ".2em",
-          textTransform: "uppercase",
-          cursor: "pointer",
-          transition: "all .4s",
-        }}
-      >
-        Park it in your driveway
-      </button>
-    </>
-  );
-}
-
 export default function Home() {
   const sp = useRef(0);
   const on = useRef(false);
@@ -248,23 +130,14 @@ export default function Home() {
   const hint = useRef<HTMLDivElement>(null);
   const t1 = useRef<HTMLHeadingElement>(null);
   const t2 = useRef<HTMLParagraphElement>(null);
-  const soundStarted = useRef(false);
+  const [showQR, setShowQR] = useState(false);
+  const audioPlayed = useRef(false);
 
   useEffect(() => {
-    let unlockSound = false;
+    window.scrollTo(0, 0);
+  }, []);
 
-    const playSound = () => {
-      if (!unlockSound && audioRef.current) {
-        unlockSound = true;
-        soundStarted.current = true;
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
-        document.removeEventListener("pointerdown", playSound);
-      }
-    };
-
-    document.addEventListener("pointerdown", playSound);
-
+  useEffect(() => {
     const lenis = new Lenis({
       duration: 1.6,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -273,8 +146,8 @@ export default function Home() {
       sp.current = progress;
       if (progress > 0.015 && !on.current) {
         on.current = true;
-        if (audioRef.current && !soundStarted.current) {
-          soundStarted.current = true;
+        if (audioRef.current && !audioPlayed.current) {
+          audioPlayed.current = true;
           audioRef.current.currentTime = 0;
           audioRef.current.play().catch(() => {});
         }
@@ -328,11 +201,18 @@ export default function Home() {
         },
       );
     });
-    return () => {
-      lenis.destroy();
-      document.removeEventListener("pointerdown", playSound);
-    };
+    return () => lenis.destroy();
   }, []);
+
+  const handleAR = () => {
+    const ua = navigator.userAgent || "";
+    if (/iPad|iPhone|iPod|Android/.test(ua)) {
+      window.location.href =
+        "https://mercedes-ar.netlify.app/ar?model=%2Fmodels%2Feqs.glb";
+    } else {
+      setShowQR(true);
+    }
+  };
 
   return (
     <>
@@ -381,6 +261,82 @@ export default function Home() {
         <br />
         <span style={{ fontSize: 18 }}>↓</span>
       </div>
+      {showQR && (
+        <div
+          onClick={() => setShowQR(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.92)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 24,
+              padding: 40,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+              maxWidth: 320,
+              width: "90%",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "Inter,sans-serif",
+                fontSize: 11,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "#999",
+              }}
+            >
+              Scan with your phone
+            </p>
+            <QRCodeSVG
+              value="https://mercedes-ar.netlify.app/ar?model=%2Fmodels%2Feqs.glb"
+              size={200}
+              bgColor="#fff"
+              fgColor="#000"
+              level="H"
+            />
+            <p
+              style={{
+                fontFamily: "Inter,sans-serif",
+                fontSize: 13,
+                color: "#aaa",
+                textAlign: "center",
+                lineHeight: 1.6,
+              }}
+            >
+              Scan · park the EQS in your driveway
+            </p>
+            <button
+              onClick={() => setShowQR(false)}
+              style={{
+                fontFamily: "Inter,sans-serif",
+                fontSize: 11,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "#bbb",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "8px 16px",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <main style={{ position: "relative", zIndex: 10, pointerEvents: "none" }}>
         <section style={{ height: "100vh" }} />
         <section
@@ -606,7 +562,24 @@ export default function Home() {
             >
               See it in your reality
             </p>
-            <ARButton />
+            <button
+              onClick={handleAR}
+              style={{
+                fontFamily: "Inter,sans-serif",
+                background: "#fff",
+                color: "#000",
+                border: "none",
+                borderRadius: "9999px",
+                padding: "16px 48px",
+                fontSize: "12px",
+                letterSpacing: ".2em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                transition: "all .4s",
+              }}
+            >
+              Park it in your driveway
+            </button>
             <p
               style={{
                 color: "rgba(255,255,255,0.25)",
