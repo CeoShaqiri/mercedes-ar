@@ -233,27 +233,37 @@ export default function Home() {
   const sp = useRef(0);
   const on = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const played = useRef(false);
   const hint = useRef<HTMLDivElement>(null);
   const t1 = useRef<HTMLHeadingElement>(null);
   const t2 = useRef<HTMLParagraphElement>(null);
+  const audioStarted = useRef(false);
 
   useEffect(() => {
+    const playAudio = () => {
+      if (audioRef.current && !audioStarted.current) {
+        audioStarted.current = true;
+        audioRef.current.volume = 0.8;
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+        document.removeEventListener("pointerdown", playAudio);
+      }
+    };
+
+    document.addEventListener("pointerdown", playAudio);
+
     const lenis = new Lenis({
       duration: 1.6,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
     lenis.on("scroll", ({ progress }: { progress: number }) => {
       sp.current = progress;
-      if (progress > 0.015 && !played.current) {
-        played.current = true;
+      if (progress > 0.015 && !on.current) {
         on.current = true;
-        if (audioRef.current) {
+        if (audioRef.current && !audioStarted.current) {
+          audioStarted.current = true;
           audioRef.current.volume = 0.8;
           audioRef.current.currentTime = 0;
-          audioRef.current
-            .play()
-            .catch((err) => console.log("Audio play failed:", err));
+          audioRef.current.play().catch(() => {});
         }
         gsap.to(hint.current, { opacity: 0, duration: 0.5 });
         gsap.fromTo(
@@ -305,19 +315,9 @@ export default function Home() {
         },
       );
     });
-    const unlock = () => {
-      audioRef.current
-        ?.play()
-        .then(() => {
-          audioRef.current?.pause();
-          if (audioRef.current) audioRef.current.currentTime = 0;
-        })
-        .catch(() => {});
-      window.removeEventListener("pointerdown", unlock);
-    };
-    window.addEventListener("pointerdown", unlock);
     return () => {
       lenis.destroy();
+      document.removeEventListener("pointerdown", playAudio);
     };
   }, []);
 
